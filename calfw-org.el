@@ -286,14 +286,21 @@ day in the calendar."
                      text)))))))
 
 (defun calfw-org--range-dates-exist-p (range periods)
-  "Check if a range with the same start and end dates exists in PERIODS.
-Compares only the date components, ignoring the text, to prevent
-duplicate display when org-agenda returns two entries for a single
-time range (one for start time, one for end time)."
-  (cl-some (lambda (existing)
-             (and (equal (car range) (car existing))
-                  (equal (cadr range) (cadr existing))))
-           periods))
+  "Check if a range with the same dates and summary exists in PERIODS.
+Compares start date, end date, and the summary text with any
+leading time prefix stripped, to prevent false deduplication of
+genuinely different events that share the same date range."
+  (let ((range-summary (replace-regexp-in-string
+                        "^[0-9]\\{2\\}:[0-9]\\{2\\} " ""
+                        (substring-no-properties (caddr range)))))
+    (cl-some (lambda (existing)
+               (and (equal (car range) (car existing))
+                    (equal (cadr range) (cadr existing))
+                    (equal range-summary
+                           (replace-regexp-in-string
+                            "^[0-9]\\{2\\}:[0-9]\\{2\\} " ""
+                            (substring-no-properties (caddr existing))))))
+             periods)))
 
 (defun calfw-org--schedule-period-to-calendar (org-files begin end)
   "Return calfw calendar items between BEGIN and END from ORG-FILES."
