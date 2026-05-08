@@ -285,6 +285,16 @@ day in the calendar."
                       (time-to-days end-date))
                      text)))))))
 
+(defun calfw-org--range-dates-exist-p (range periods)
+  "Check if a range with the same start and end dates exists in PERIODS.
+Compares only the date components, ignoring the text, to prevent
+duplicate display when org-agenda returns two entries for a single
+time range (one for start time, one for end time)."
+  (cl-some (lambda (existing)
+             (and (equal (car range) (car existing))
+                  (equal (cadr range) (cadr existing))))
+           periods))
+
 (defun calfw-org--schedule-period-to-calendar (org-files begin end)
   "Return calfw calendar items between BEGIN and END from ORG-FILES."
   (cl-loop
@@ -296,7 +306,7 @@ day in the calendar."
    for range = (calfw-org-get-timerange line (and (equal date begin) date))
    if range
    do
-   (unless (member range periods)
+   (unless (calfw-org--range-dates-exist-p range periods)
      (push range periods))
    else do
    ;; dotime is not present if this event was already added as a timerange
